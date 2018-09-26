@@ -25,25 +25,33 @@ public class RunServerInterface
     {
         //NEED TO WORK ON THIS - WHAT DATA DO WE PASS INTO THIS PROGRAM AND HOW?
         String QueryType = "";
-        String UserID = "";
+        int UserID = 0;
         String TrackName = "";
         String Genre = "";
         String Artist = "";
         String Length = "";
         String MoodID = "";
         
-        //
+        //User Test Data
         String FirstName = "Joseph";
         String LastName= "Zhang";
         String EmailAddress = "test@test.com";
         String DateOfBirth = "09-26-2000 05:23:34";
         String Gender = "Female";
         String UserPassword = "Testing";
+        
+        String PreferredPlatform = "Spotify";
+        String MusicQuestionOne = "Quest1";
+        String MusicQuestionTwo = "Quest2";
+        String MusicQuestionThree = "Quest3";
+        
+        String MakeRecommendations = "Yes";
+        String MoodFrequency = "Once Per Hour";
 
          if(args.length == 8)
          {
              QueryType = args[1];
-             UserID = args[2];
+             UserID = Integer.parseInt(args[2]);
              TrackName = args[3];
              Genre = args[4];
              Artist = args[5];
@@ -76,8 +84,8 @@ public class RunServerInterface
             ResultSet rs;
 
             //TEST
-            QueryType = "InsertUser";
-            UserID = "1";
+            QueryType = "UpdateUserSecondPage";
+            UserID = 1;
             TrackName = "Musical Adventures7";
             Genre = "Adventure";
             Artist = "B-Cool";
@@ -88,24 +96,71 @@ public class RunServerInterface
              GeneratePlayLists Playlist = new GeneratePlayLists();
              ApplicationUserQueries UserQuery = new ApplicationUserQueries();
 
-            if (QueryType.equals("MusicTrackStart"))
+            switch (QueryType)
             {
-                Playlist.TrackStarted(UserID, TrackName, Genre, Artist, Length,
-                     SQLStatement);
+                case "TrackStarted":
+                    Playlist.TrackStarted(UserID, TrackName, Genre, Artist,
+                            Length, SQLStatement);
+                    break;
+                case "TrackEnded":
+                    Playlist.TrackEnded(MoodID, SQLStatement);
+                    break;
+                case "GetMusicHistory":
+                    UserQuery.GetMusicHistory(UserID, SQLStatement);
+                    break; 
+                case "GetUserDetailsRegistration":
+                    UserQuery.GetUserDetailsRegistration(UserID, SQLStatement);
+                    break;
+                case "GetUserDetails":
+                    UserQuery.GetUserDetails(UserID, SQLStatement);
+                    break;
+                case "GetUserID":
+                    UserQuery.GetUserID(EmailAddress, SQLStatement);
+                    break;
+                case "GetUserSettings":
+                    UserQuery.GetUserSettings(UserID, SQLStatement);
+                    break;
+                case "IsEmailAddressUnique":
+                    UserQuery.IsEmailAddressUnique(EmailAddress, SQLStatement);
+                    break;
+                case "InsertNewUser":
+                    UserQuery.InsertNewUser(FirstName, LastName, EmailAddress,
+                            DateOfBirth, Gender, UserPassword, SQLStatement);
+                    break;   
+                case "UpdatePassword":
+                        UserQuery.UpdatePassword(UserPassword, UserID,
+                                SQLStatement);
+                    break;
+                case "UpdateNewUser":
+                    UserQuery.UpdateNewUser(FirstName, LastName, EmailAddress,
+                            DateOfBirth, Gender, UserPassword, UserID,
+                            SQLStatement);
+                    break;
+                case "UpdateUserSecondPage":
+                    UserQuery.UpdateUserSecondPage(PreferredPlatform,
+                            MusicQuestionOne, MusicQuestionTwo,
+                            MusicQuestionThree, UserID, SQLStatement);
+                    break;
+                case "UpdateUser":
+                        UserQuery.UpdateUser(FirstName, LastName, EmailAddress,
+                            DateOfBirth, Gender, UserID, SQLStatement);
+                    break;
+                case "UpdateSettings":
+                        UserQuery.UpdateSettings(MakeRecommendations,
+                                MoodFrequency, UserID, SQLStatement);
+                    break;
+                case "VerifyLogin":
+                        UserQuery.VerifyLogin(EmailAddress, UserPassword,
+                                SQLStatement);
+                    break;
+                case "VerifyPassword":
+                        UserQuery.VerifyPassword(UserID, UserPassword,
+                                SQLStatement);
+                    break;
+                default:
+                    break;
             }
-            else if (QueryType.equals("MusicTrackEnd"))
-            {
-                Playlist.TrackEnded(MoodID, SQLStatement);
-            }
-            else if (QueryType.equals("InsertUser"))
-            {
-                UserQuery.InsertNewUser(FirstName, LastName, EmailAddress,
-                        DateOfBirth, Gender, UserPassword, SQLStatement);
-            }
-            else if (QueryType.equals("UpdateUser"))
-            {
-                
-            }
+            
             //close the database connection
             DatabaseConnection.close();
         }
