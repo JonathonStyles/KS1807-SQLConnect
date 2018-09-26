@@ -1,11 +1,9 @@
 package sqlconnect;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -14,6 +12,8 @@ public class GeneratePlaylists
 {
     private static final String JDBCDriver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
     private static final String ServerConnectionType = "jdbc:sqlserver";
+    
+    //May need to pass these parameters in through a configuration file
     private static final String ServerName = "PE-KS1807\\SQLEXPRESS";
     private static final String ServerPort = "1433";
     private static final String DatabaseName = "MFMHDatabase_UAT";
@@ -24,114 +24,81 @@ public class GeneratePlaylists
             ServerName + ":" + ServerPort + ";databasename=" + DatabaseName +
             ";user=" + DBUser + ";password=" + DBUserPassword + ";";
     
-public static void main(String[] args)
-{
-    //NEED TO WORK ON THIS - WHAT DATA DO WE PASS INTO THIS PROGRAM AND HOW?
-    String MusicTrackStatus = "";
-    String UserID = "";
-    String TrackName = "";
-    String Genre = "";
-    String Artist = "";
-    String Length = "";
-    String MoodID = "";
-    
-     if(args.length == 8)
-     {
-         MusicTrackStatus = args[1];
-         UserID = args[2];
-         TrackName = args[3];
-         Genre = args[4];
-         Artist = args[5];
-         Length = args[6];
-         MoodID = args[7];
-     }
-
-    /*First try loading the drivers that connect to the server*/
-    try
+    public static void main(String[] args)
     {
-       Class.forName(JDBCDriver).getConstructor().newInstance();
-       System.out.println("JDBC driver loaded");
-    }
-    catch (Exception err)
-    {
-       System.err.println("Error loading JDBC driver");
-       err.printStackTrace(System.err);
-       System.exit(0);
-    }
+        //NEED TO WORK ON THIS - WHAT DATA DO WE PASS INTO THIS PROGRAM AND HOW?
+        String MusicTrackStatus = "";
+        String UserID = "";
+        String TrackName = "";
+        String Genre = "";
+        String Artist = "";
+        String Length = "";
+        String MoodID = "";
 
-    try
-    {
-        //Connect to the database with the connection string.
-        System.out.println(JDBC_URL);
-        Connection DatabaseConnection = DriverManager.getConnection(JDBC_URL);
+         if(args.length == 8)
+         {
+             MusicTrackStatus = args[1];
+             UserID = args[2];
+             TrackName = args[3];
+             Genre = args[4];
+             Artist = args[5];
+             Length = args[6];
+             MoodID = args[7];
+         }
 
-        //Create the statement object and result set for SQL Server.
-        Statement SQLStatement = DatabaseConnection.createStatement();
-        ResultSet rs;
-      
-        //TEST
-        MusicTrackStatus = "Start";
-        UserID = "1";
-        TrackName = "Musical Adventures7";
-        Genre = "Adventure";
-        Artist = "B-Cool";
-        Length = "4:45";
-        MoodID = "5";
-         //TEST
-        
-        if (MusicTrackStatus == "Start")
+        /*First try loading the drivers that connect to the server*/
+        try
         {
-            TrackStarted(UserID, TrackName, Genre, Artist, Length,
-                 SQLStatement);
+           Class.forName(JDBCDriver).getConstructor().newInstance();
+           System.out.println("JDBC driver loaded");
         }
-        else if (MusicTrackStatus == "End")
+        catch (Exception err)
         {
-            TrackEnded(MoodID, SQLStatement);
-        }
-        else if (MusicTrackStatus == "UserAlert")
-        {
-            //Get the Moods and Emoticons
+           System.err.println("Error loading JDBC driver");
+           err.printStackTrace(System.err);
+           System.exit(0);
         }
 
-      
-        String queryString="select ";
-        queryString+="* FROM MOODSCORE";
-
-        //print the query string to the screen
-        System.out.println("\nQuery string:");
-        System.out.println(queryString);
-
-        //execute the query
-        rs=SQLStatement.executeQuery(queryString);
-
-        while (rs.next())
+        try
         {
-            printResultSetRow(rs);
-        }    
+            //Connect to the database with the connection string.
+            System.out.println(JDBC_URL);
+            Connection DatabaseConnection = DriverManager.getConnection(JDBC_URL);
 
-        //close the result set
-        rs.close();
-        System.out.println("Closing database connection");
+            //Create the statement object and result set for SQL Server.
+            Statement SQLStatement = DatabaseConnection.createStatement(
+                    ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            ResultSet rs;
 
-        //close the database connection
-        DatabaseConnection.close();
-    }
-    catch (SQLException err)
-    {
-       System.err.println("Error connecting to the database");
-       err.printStackTrace(System.err);
-       System.exit(0);
-    }
-    System.out.println("Program finished");
-}
+            //TEST
+            MusicTrackStatus = "End";
+            UserID = "1";
+            TrackName = "Musical Adventures7";
+            Genre = "Adventure";
+            Artist = "B-Cool";
+            Length = "4:45";
+            MoodID = "5";
+             //TEST
 
-    private static void printResultSetRow(ResultSet rs) throws SQLException
-    {
-        //Use the column name alias as specified in the above query
-	String OrganizationName= rs.getString("MoodScoreID");
-	String ParentOrganizationName= rs.getString("Mood");
-	String CurrencyName= rs.getString("Score");
-	System.out.println(ParentOrganizationName+"\t|\t"+ OrganizationName + "\t|\t" + CurrencyName);  
+            if (MusicTrackStatus == "Start")
+            {
+                TrackStarted(UserID, TrackName, Genre, Artist, Length,
+                     SQLStatement);
+            }
+            else if (MusicTrackStatus == "End")
+            {
+                TrackEnded(MoodID, SQLStatement);
+            }
+
+            //close the database connection
+            DatabaseConnection.close();
+        }
+        catch (SQLException err)
+        {
+           System.err.println("Error connecting to the database");
+           err.printStackTrace(System.err);
+           System.exit(0);
+        }
     }
     
     private static int AddTrack(String TrackName, String Genre, String Artist,
@@ -182,63 +149,110 @@ public static void main(String[] args)
     
     private static void AddTracksToPlaylist(String UserID, Statement SQLStatement)
     {
-        /*Count all rows in the UserMood table that have a match UserID
-        and where HasBeenRecommended = “No”.*/
-        String SQLQuery = "SELECT Count(UserID) FROM UserMood WHERE UserID = " + "'" +
-                UserID + "' AND HasBeenRecommended = 'No'";
-
-        int NonRecommendedCount = 11;
-
-        if (NonRecommendedCount > 10)
+        try
         {
-            //Checks if the user wants the system to make recommendations.
-            SQLQuery = "SELECT Count(UserID) FROM UserSettings WHERE UserID = " + "'" +
-                    UserID + "' AND MakeRecommendations = 'Yes'";
-
-            int RecommendationsOn = 1;
-            if (RecommendationsOn > 0)
+            /*Count all rows in the UserMood table that have a match UserID
+            and where HasBeenRecommended = “No”.*/
+            String SQLQuery = "SELECT Count(UserID) AS TracksNotRecommendedCount "
+                    + "FROM UserMood WHERE UserID = " + "'" +
+                    UserID + "' AND HasBeenRecommended = 'No'";
+            
+            ResultSet rs = SQLStatement.executeQuery(SQLQuery);
+        
+            int NonRecommendedCount = 0;
+            if (rs.next())
             {
-                int TrackIDs[] = MakeRecommendation(UserID, SQLStatement);
-                int UserTrackIDs[] = MakeRecommendationUsers(SQLStatement);
+                NonRecommendedCount = Integer.parseInt(
+                        rs.getString("TracksNotRecommendedCount"));
+            }
 
-                /*Insert a record into the PlayList table with the current UserID, PlayListName
-                as ‘Music To Make You Feel Better’ and RecommendedBy as ‘System’.
-                Get the PlayListID of this newly inserted record.*/
-                SQLQuery = "INSERT INTO PlayList (UserID, PlayListName, RecommendedBy)\n" +
-                "VALUES('" + UserID + "', " + "'Music To Make You Feel Better'" + ", '" +
-                        "System" + "')\n\nSELECT SCOPE_IDENTITY()";
+            if (NonRecommendedCount > 10)
+            {
+                //Checks if the user wants the system to make recommendations.
+                SQLQuery = "SELECT MakeRecommendations FROM UserSettings "
+                        + "WHERE UserID = " + "'" +
+                        UserID + "' AND MakeRecommendations = 'Yes'";
 
-                int PlayListID = 5;
-
-                for (int i = 0; i < TrackIDs.length; i++)
+                rs = SQLStatement.executeQuery(SQLQuery);
+                
+                String MakeRecommendations = "";
+                
+                if (rs.next())
                 {
-                    int TrackIDToInsert = TrackIDs[i];
-
-                    /*Insert a record into the TracksInPlayList table with the current
-                    UserID, the PlayListID and the RecommendedTrackID from the array.*/
-                    SQLQuery = "INSERT INTO TracksInPlayList (UserID, PlayListID, TrackID)\n" +
-                            "VALUES('" + UserID + "', '" + PlayListID +
-                            "', '" + TrackIDToInsert + "')";
+                    MakeRecommendations = rs.getString("MakeRecommendations");
                 }
-
-                /*Insert a record into the PlayList table with the current UserID, PlayListName
-                as ‘Music that others are listening to’ and RecommendedBy as ‘Users’.
-                Get the PlayListID of this newly inserted record.*/
-                SQLQuery = "INSERT INTO PlayList (UserID, PlayListName, RecommendedBy)\n" +
-                        "VALUES('" + UserID + "', " + "'Music that others are listening to'" +
-                        ", '" + "Users" + "')\n\nSELECT SCOPE_IDENTITY()";
-
-                for (int i = 0; i < UserTrackIDs.length; i++)
+                
+                if (MakeRecommendations.equals("Yes"))
                 {
-                    int TrackIDToInsert = UserTrackIDs[i];
+                    int TrackIDs[] = MakeRecommendation(UserID, SQLStatement);
+                    int UserTrackIDs[] = MakeRecommendationUsers(SQLStatement);
 
-                    /*Insert a record into the TracksInPlayList table with the current
-                    UserID, the PlayListID and the UserTrackID from the array.*/
-                    SQLQuery = "INSERT INTO TracksInPlayList (UserID, PlayListID, TrackID)\n" +
-                            "VALUES('" + UserID + "', '" + PlayListID +
-                            "', '" + TrackIDToInsert + "')";
+                    /*Insert a record into the PlayList table with the current UserID, PlayListName
+                    as ‘Music To Make You Feel Better’ and RecommendedBy as ‘System’.
+                    Get the PlayListID of this newly inserted record.*/
+                    SQLQuery = "SET NOCOUNT ON; INSERT INTO PlayList (UserID,"
+                            + "PlayListName, RecommendedBy)\n" +
+                    "VALUES('" + UserID + "', " + "'Music To Make You Feel Better'"
+                            + ", '" + "System" + "'); SELECT SCOPE_IDENTITY() "
+                            + "AS PlayListID";
+                    
+                    rs = SQLStatement.executeQuery(SQLQuery);
+                
+                    int PlayListID = -1;            
+                    if (rs.next())
+                    {
+                        PlayListID = Integer.parseInt(rs.getString("PlayListID"));
+                    }
+
+                    for (int i = 0; i < TrackIDs.length; i++)
+                    {
+                        int TrackIDToInsert = TrackIDs[i];
+
+                        /*Insert a record into the TracksInPlayList table with the current
+                        UserID, the PlayListID and the RecommendedTrackID from the array.*/
+                        SQLQuery = "INSERT INTO TracksInPlayList (UserID, PlayListID, TrackID)\n" +
+                                "VALUES('" + UserID + "', '" + PlayListID +
+                                "', '" + TrackIDToInsert + "')";
+                        SQLStatement.execute(SQLQuery);
+                    }
+
+                    /*Insert a record into the PlayList table with the current UserID, PlayListName
+                    as ‘Music that others are listening to’ and RecommendedBy as ‘Users’.
+                    Get the PlayListID of this newly inserted record.*/
+                    SQLQuery = "SET NOCOUNT ON; INSERT INTO PlayList (UserID, "
+                            + "PlayListName, RecommendedBy)\n" +
+                            "VALUES('" + UserID + "', " +
+                            "'Music that others are listening to'" +
+                            ", '" + "Users" + "'); SELECT SCOPE_IDENTITY() "
+                            + "AS PlayListID";
+                    rs = SQLStatement.executeQuery(SQLQuery);
+                
+                    PlayListID = -1;            
+                    if (rs.next())
+                    {
+                        PlayListID = Integer.parseInt(rs.getString("PlayListID"));
+                    }
+
+                    for (int i = 0; i < UserTrackIDs.length; i++)
+                    {
+                        int TrackIDToInsert = UserTrackIDs[i];
+
+                        /*Insert a record into the TracksInPlayList table with the current
+                        UserID, the PlayListID and the UserTrackID from the array.*/
+                        SQLQuery = "INSERT INTO TracksInPlayList (UserID, PlayListID, TrackID)\n" +
+                                "VALUES('" + UserID + "', '" + PlayListID +
+                                "', '" + TrackIDToInsert + "')";
+                        SQLStatement.execute(SQLQuery);
+                    }
                 }
             }
+            rs.close();
+        }
+        catch (SQLException err)
+        {
+            System.err.println("Error executing query");
+            err.printStackTrace(System.err);
+            System.exit(0);
         }
     }
     
@@ -270,7 +284,8 @@ public static void main(String[] args)
             if (rs.next())
             {
                 MoodAfterTimeString = rs.getString("MoodAfterTime");
-            } 
+            }
+            rs.close();
 
             try
             {
@@ -336,13 +351,36 @@ public static void main(String[] args)
             Statement SQLStatement)
     {
         int Score = 0;
+        try
+        {
+            //Select the score from the MoodScore table.
+            String SQLQuery = "SELECT Score FROM MoodScore WHERE Mood = " + "'"
+                    + MoodName + "'";
 
-        //Select the score from the MoodScore table.
-        String SQLQuery = "SELECT Score FROM MoodScore WHERE Mood = " + "'" + MoodName + "'";
-
-        String MoodScore = "2";
-        Score = Integer.parseInt(MoodScore);
-
+            ResultSet rs = SQLStatement.executeQuery(SQLQuery);
+            
+            String MoodScore = "0";
+            if (rs.next())
+            {
+                MoodScore = rs.getString("Score");
+            }
+            rs.close();
+            
+            if (!MoodScore.equals(""))
+            {
+                Score = Integer.parseInt(MoodScore);
+            }
+            else
+            {
+                //Invalid Mood.
+                return 0;
+            }          
+        }
+        catch (SQLException err)
+        {
+            //Invalid Mood.
+            return 0;
+        }
         return Score;
     }
     
@@ -395,242 +433,375 @@ public static void main(String[] args)
 
     private static int[] MakeRecommendation(String UserID, Statement SQLStatement)
     {
-        String[][] GenresAndScores = SetRecommendationScoreForGenre(UserID,
-                SQLStatement);
-
-        //Need to convert the strings back to numbers.
-        float GenreScores[] = new float[GenresAndScores.length];
-        for (int i = 0; i < GenresAndScores.length; i++)
+        int TrackIDs[] = new int[10];
+        
+        try
         {
-            GenreScores[i] = Float.valueOf(GenresAndScores[1][i]);
+            String[][] GenresAndScores = SetRecommendationScoreForGenre(UserID,
+                    SQLStatement);
+
+            //Need to convert the strings back to numbers.
+            float GenreScores[] = new float[GenresAndScores.length];
+            for (int i = 0; i < GenresAndScores.length; i++)
+            {
+                GenreScores[i] = Float.valueOf(GenresAndScores[1][i]);
+            }
+
+            //Now we check which of these genres has the highest number and get its place in the index.
+            int Index = GetIndexOfMaximumFloatValue(GenreScores);
+
+            //We then get the string value of this genre from the index.
+            String HighestGenre= GenresAndScores[0][Index];
+
+            /*Select 10 unique music and random tracks that belong to this genre. Note ORDER BY newid()
+            should make the selection random*/
+            String SQLQuery = "SELECT TOP (10) TrackID FROM MusicTrack WHERE Genre = "
+                    + "'" + HighestGenre + "' ORDER BY newid()";
+
+            ResultSet rs = SQLStatement.executeQuery(SQLQuery);
+
+            int i = 0;
+            while (rs.next())
+            {
+                TrackIDs[i] = Integer.parseInt(rs.getString("TrackID"));
+                i++;
+            }
+            rs.close();
+            return TrackIDs;
         }
-
-        //Now we check which of these genres has the highest number and get its place in the index.
-        int Index = GetIndexOfMaximumFloatValue(GenreScores);
-
-        //We then get the string value of this genre from the index.
-        String HighestGenre= GenresAndScores[0][Index];
-
-        /*Select 10 unique music and random tracks that belong to this genre. Note ORDER BY newid()
-        should make the selection random*/
-        String SQLQuery = "SELECT TOP (10) TrackID FROM MusicTrack WHERE Genre = " + "'" +
-                HighestGenre + "' ORDER BY newid()";
-
-        int TrackIDs[] = {1,2,3,50,34,43,4,5,9,67};
-
-        return TrackIDs;
+        catch (SQLException err)
+        {
+            System.err.println("Error executing query");
+            err.printStackTrace(System.err);
+            System.exit(0);
+            return TrackIDs;
+        }
     }
 
     private static int[] MakeRecommendationUsers(Statement SQLStatement)
     {
-        String[][] GenresAndScores = SetRecommendationScoreForGenre("", 
-                SQLStatement);
-
-        //Need to convert the strings back to numbers.
-        float GenreScores[] = new float[GenresAndScores.length];
-        for (int i = 0; i < GenresAndScores.length; i++)
+        int TrackIDs[] = new int[10];
+        
+        try
         {
-            GenreScores[i] = Float.valueOf(GenresAndScores[1][i]);
+            String[][] GenresAndScores = SetRecommendationScoreForGenre("", 
+                    SQLStatement);
+
+            //Need to convert the strings back to numbers.
+            float GenreScores[] = new float[GenresAndScores.length];
+            for (int i = 0; i < GenresAndScores.length; i++)
+            {
+                GenreScores[i] = Float.valueOf(GenresAndScores[1][i]);
+            }
+
+            //Now we check which of these genres has the highest number and get its place in the index.
+            int Index = GetIndexOfMaximumFloatValue(GenreScores);
+
+            //We then get the string value of this genre from the index.
+            String HighestGenre= GenresAndScores[0][Index];
+
+            /*Select 10 unique music and random tracks that belong to this genre. Note ORDER BY newid()
+            should make the selection random*/
+            String SQLQuery = "SELECT TOP (10) TrackID FROM MusicTrack WHERE Genre = '" +
+                    HighestGenre + "' ORDER BY newid()";
+
+            ResultSet rs = SQLStatement.executeQuery(SQLQuery);
+
+            int i = 0;
+            while (rs.next())
+            {
+                TrackIDs[i] = Integer.parseInt(rs.getString("TrackID"));
+                i++;
+            }
+            rs.close();
+            return TrackIDs;
         }
-
-        //Now we check which of these genres has the highest number and get its place in the index.
-        int Index = GetIndexOfMaximumFloatValue(GenreScores);
-
-        //We then get the string value of this genre from the index.
-        String HighestGenre= GenresAndScores[0][Index];
-
-        /*Select 10 unique music and random tracks that belong to this genre. Note ORDER BY newid()
-        should make the selection random*/
-        String SQLQuery = "SELECT TOP (10) TrackID FROM MusicTrack WHERE Genre = '" +
-                HighestGenre + "' ORDER BY newid()";
-
-        int TrackIDs[] = {1,2,3,50,34,43,4,5,9,67};
-
-        return TrackIDs;
+        catch (SQLException err)
+        {
+            System.err.println("Error executing query");
+            err.printStackTrace(System.err);
+            System.exit(0);
+            return TrackIDs;
+        }
     }
 
     private static String[][] SetRecommendationScoreForGenre(String UserID,
             Statement SQLStatement)
     {
-        String SQLQuery = "";
-
-        /*Get the list of all unique genres from the MusicTrack table (as long as the genre has
-        been listened to at least once by the user)*/
-        if (!UserID.equals(""))
+        try
         {
-            SQLQuery = "SELECT DISTINCT Genre FROM MusicTrack INNER JOIN UserMood ON " +
-                    "MusicTrack.TrackID = UserMood.TrackID WHERE UserID = '" + UserID + "'";
-        }
-        else /*Or get all Genres that all users have ever listened to*/
-        {
-            SQLQuery = "SELECT DISTINCT Genre FROM MusicTrack";
-        }
+            String SQLQuery = "";
+            ResultSet rs;
+            int RowCount = 0;
 
-        int GenreSize = 10;
-        String Genres[] = new String[GenreSize];
-        for (int i = 0; i < GenreSize; i++)
-        {
-            Genres[i] = "";
-        }
-
-        /*Create a  float Array of the same size as Genres called GenreScores,
-        initialize all values as 0.*/
-        float GenreScores[] = new float[GenreSize];
-        for (int i = 0; i < GenreSize; i++)
-        {
-            GenreScores[i] = 0;
-        }
-
-        /*Create int Array of the same size as Genres called GenreTrackCount, initialize
-        all values as 0.*/
-        int GenreTrackCount[] = new int[GenreSize];
-        for (int i = 0; i < GenreSize; i++)
-        {
-            GenreTrackCount[i] = 0;
-        }
-
-        int TrackArray[] = {1, 2, 4, 23, 12};
-        int TrackArraySize = 0;
-
-        /*Get the list of all unique TrackIDs from the UserMood table with a matching UserID.*/
-        if (!UserID.equals(""))
-        {
-            SQLQuery = "SELECT DISTINCT TrackID FROM UserMood WHERE UserID = " +
-                    "'" + UserID + "'";
-            TrackArraySize = TrackArray.length;
-        }
-        /*Get the list of all unique TrackIDs from the UserMood table.*/
-        else
-        {
-            SQLQuery = "SELECT DISTINCT TrackID FROM UserMood";
-            TrackArraySize = TrackArray.length;
-        }
-
-        //Create an empty second float array of the same size as TrackArray called TrackScores.
-        float TrackScores[] = new float[TrackArraySize];
-        for (int i = 0; i < TrackArraySize; i++)
-        {
-            /*Get the average mood score for every music track we have.*/
-            TrackScores[i] = SetRecommendationScoreForTrack(UserID,
-                    String.valueOf(TrackArray[i]), SQLStatement);
-
-            /*For the nth TrackID in the TrackArray, match the TrackID with the Genre through the
-            MusicTrack table.*/
-            SQLQuery = "SELECT DISTINCT Genre FROM MusicTrack WHERE TrackID = " +
-                    "'" + TrackArray[i] + "'";
-
-            String TheGenre = "TEST";
-
-            /*Make sure that the Genre Scores correspond to where the string was originally
-            added in the Genre array (so that the Classical Music score should go where
-            Classical Music was added)*/
-            int GenreIndex = GetArrayIndexFromString(Genres, TheGenre);
-
-            /*Add up the scores for each music track in the same genre and count how many music
-            tracks are in that genre.*/
-            GenreScores[GenreIndex] = GenreScores[GenreIndex] + TrackScores[i];
-            GenreTrackCount[GenreIndex] = GenreTrackCount[GenreIndex] + 1;
-        }
-
-        String[][] AverageGenreScores = new String[GenreSize][GenreSize];
-        for (int i = 0; i < GenreSize; i++)
-        {
-            /*We now get the average genre score for each genre, which is all of the track scores
-            per genre divided by the number of tracks in that genre.*/
-            float TrackCount = GenreTrackCount[i];
-
-            //Avoid Divide by Zero Error
-            if (TrackCount == 0.0)
+            /*Get the list of all unique genres from the MusicTrack table (as long as the genre has
+            been listened to at least once by the user)*/
+            if (!UserID.equals(""))
             {
-                TrackCount = 1;
+                SQLQuery = "SELECT DISTINCT Genre FROM MusicTrack INNER JOIN UserMood ON " +
+                        "MusicTrack.TrackID = UserMood.TrackID WHERE UserID = '" + UserID + "'";
+                rs = SQLStatement.executeQuery(SQLQuery);
+            }
+            else /*Or get all Genres that all users have ever listened to*/
+            {
+                SQLQuery = "SELECT DISTINCT Genre FROM MusicTrack";
+                rs = SQLStatement.executeQuery(SQLQuery);
             }
 
-            float Average = GenreScores[i]/TrackCount;
-            String TheGenre = Genres[i];
-            AverageGenreScores[0][i] = TheGenre;
-            AverageGenreScores[1][i] = String.valueOf(Average);
+            //Count how many genres we have selected.
+            rs.last();
+            RowCount = rs.getRow();
+            rs.beforeFirst();
+            
+            int GenreSize = RowCount;
+            String Genres[] = new String[GenreSize];
+            int i = 0;
+            while (rs.next())
+            {
+                Genres[i] = rs.getString("Genre");
+                i++;
+            }
+
+            /*Create a  float Array of the same size as Genres called GenreScores,
+            initialize all values as 0.*/
+            float GenreScores[] = new float[GenreSize];
+            for (i = 0; i < GenreSize; i++)
+            {
+                GenreScores[i] = 0;
+            }
+
+            /*Create int Array of the same size as Genres called GenreTrackCount, initialize
+            all values as 0.*/
+            int GenreTrackCount[] = new int[GenreSize];
+            for (i = 0; i < GenreSize; i++)
+            {
+                GenreTrackCount[i] = 0;
+            }
+
+            /*Get the list of all unique TrackIDs from the UserMood table with a matching UserID.*/
+            if (!UserID.equals(""))
+            {
+                SQLQuery = "SELECT DISTINCT TrackID FROM UserMood WHERE UserID = " +
+                        "'" + UserID + "'";
+                rs = SQLStatement.executeQuery(SQLQuery);
+            }
+            /*Get the list of all unique TrackIDs from the UserMood table.*/
+            else
+            {
+                SQLQuery = "SELECT DISTINCT TrackID FROM UserMood";
+                rs = SQLStatement.executeQuery(SQLQuery);
+            }
+
+            //Count how many TrackIDs we have selected.
+            rs.last();
+            RowCount = rs.getRow();
+            rs.beforeFirst();
+            
+            int TrackArraySize = RowCount;
+            int TrackArray[] = new int [TrackArraySize];
+            
+            //Load the TrackIDs into the array.
+            i = 0;
+            while (rs.next())
+            {
+                TrackArray[i] = Integer.parseInt(rs.getString("TrackID"));
+                i++;
+            }
+
+            //Create an empty second float array of the same size as TrackArray called TrackScores.
+            float TrackScores[] = new float[TrackArraySize];
+            for (i = 0; i < TrackArraySize; i++)
+            {
+                /*Get the average mood score for every music track we have.*/
+                TrackScores[i] = SetRecommendationScoreForTrack(UserID,
+                        String.valueOf(TrackArray[i]), SQLStatement);
+
+                /*For the nth TrackID in the TrackArray, match the TrackID with the Genre through the
+                MusicTrack table.*/
+                SQLQuery = "SELECT DISTINCT Genre FROM MusicTrack WHERE TrackID = " +
+                        "'" + TrackArray[i] + "'";
+                rs = SQLStatement.executeQuery(SQLQuery);
+                
+                String TheGenre = "";
+                if (rs.next())
+                {
+                    TheGenre = rs.getString("Genre");
+                }    
+
+                /*Make sure that the Genre Scores correspond to where the string was originally
+                added in the Genre array (so that the Classical Music score should go where
+                Classical Music was added)*/
+                int GenreIndex = GetArrayIndexFromString(Genres, TheGenre);
+
+                /*Add up the scores for each music track in the same genre and count how many music
+                tracks are in that genre.*/
+                GenreScores[GenreIndex] = GenreScores[GenreIndex] + TrackScores[i];
+                GenreTrackCount[GenreIndex] = GenreTrackCount[GenreIndex] + 1;
+            }
+
+            String[][] AverageGenreScores = new String[GenreSize][GenreSize];
+            for (i = 0; i < GenreSize; i++)
+            {
+                /*We now get the average genre score for each genre, which is all of the track scores
+                per genre divided by the number of tracks in that genre.*/
+                float TrackCount = GenreTrackCount[i];
+
+                //Avoid Divide by Zero Error
+                if (TrackCount == 0.0)
+                {
+                    TrackCount = 1;
+                }
+
+                float Average = GenreScores[i]/TrackCount;
+                String TheGenre = Genres[i];
+                AverageGenreScores[0][i] = TheGenre;
+                AverageGenreScores[1][i] = String.valueOf(Average);
+            }
+            
+            rs.close();
+            return AverageGenreScores;
         }
-        return AverageGenreScores;
+        catch (SQLException err)
+        {
+            System.err.println("Error executing query");
+            err.printStackTrace(System.err);
+            System.exit(0);
+            return new String[0][0];
+        }
     }
 
-    private static float SetRecommendationScoreForTrack(String UserID, String TrackID,
-            Statement SQLStatement)
+    private static float SetRecommendationScoreForTrack(String UserID,
+            String TrackID, Statement SQLStatement)
     {
-        float Score = 0;
-        String SQLQuery = "";
-        int MoodTotal = 0;
-
-        if (!UserID.equals(""))
+        try
         {
-            //Count the number of rows we need to go through.
-            SQLQuery = "SELECT Count(UserID) FROM UserMood WHERE UserID = '" + UserID + "' " +
-                    "AND TrackID = '" + TrackID + "'";
+            float Score = 0;
+            String SQLQuery = "";
+            int MoodTotal = 0;
 
-            int RowCount = 4;
-
-            /*Get the MoodBefore and MoodAfter strings from the UserMood table by matching the
-            record to the UserID and TrackID. Note this gets the nth record in the database as
-            we want all the accumulated mood scores*/
-            int i;
-            for (i = 1; i < RowCount; i++)
+            if (!UserID.equals(""))
             {
-                SQLQuery = "SELECT TOP(1) MoodBefore FROM (SELECT ROW_NUMBER() OVER" +
-                        "(ORDER BY MoodBefore ASC) AS rownumber, MoodBefore FROM UserMood " +
-                        "WHERE UserID = '" + UserID + "' AND TrackID = '" + TrackID + "')" +
-                        "AS Mood WHERE rownumber = " + i;
+                /*Count the number of rows we need to go through. Exclude any
+                mood entries if they don't have a Before AND After Mood*/
+                SQLQuery = "SELECT Count(UserID) AS UserCount FROM UserMood WHERE UserID = '"
+                        + UserID + "' " + "AND TrackID = '" + TrackID + "' "
+                        + "AND MoodBefore IS NOT NULL AND MoodAfter IS NOT NULL";
+                
+                ResultSet rs = SQLStatement.executeQuery(SQLQuery);
 
-                String BeforeMood = "Happy";
+                int RowCount = 0;
+                if (rs.next())
+                {
+                    RowCount = Integer.parseInt(rs.getString("UserCount"));
+                } 
 
-                SQLQuery = "SELECT TOP(1) MoodAfter FROM (SELECT ROW_NUMBER() OVER" +
-                        "(ORDER BY MoodAfter ASC) AS rownumber, MoodAfter FROM UserMood " +
-                        "WHERE UserID = '" + UserID + "' AND TrackID = '" + TrackID + "')" +
-                        "AS Mood WHERE rownumber = " + i;
+                /*Get the MoodBefore and MoodAfter strings from the UserMood table by matching the
+                record to the UserID and TrackID. Note this gets the nth record in the database as
+                we want all the accumulated mood scores*/
+                int i;
+                for (i = 1; i < RowCount; i++)
+                {
+                    SQLQuery = "SELECT TOP(1) MoodBefore FROM (SELECT ROW_NUMBER() OVER" +
+                            "(ORDER BY MoodBefore ASC) AS rownumber, MoodBefore FROM UserMood " +
+                            "WHERE UserID = '" + UserID + "' AND TrackID = '" + TrackID + "') " +
+                            "AS Mood WHERE rownumber = " + i;
 
-                String AfterMood = "Sad";
+                    rs = SQLStatement.executeQuery(SQLQuery);
+                    
+                    String BeforeMood = "";
+                    if (rs.next())
+                    {
+                        BeforeMood = rs.getString("MoodBefore");
+                    }
 
-                int MoodBeforeNum  = ConvertMoodToNumber(BeforeMood,
-                        SQLStatement);
-                int MoodAfterNum  = ConvertMoodToNumber(AfterMood,
-                        SQLStatement);
-                MoodTotal = MoodTotal + (MoodAfterNum - MoodBeforeNum);
+                    SQLQuery = "SELECT TOP(1) MoodAfter FROM (SELECT ROW_NUMBER() OVER" +
+                            "(ORDER BY MoodAfter ASC) AS rownumber, MoodAfter FROM UserMood " +
+                            "WHERE UserID = '" + UserID + "' AND TrackID = '" + TrackID + "') " +
+                            "AS Mood WHERE rownumber = " + i;
+
+                    rs = SQLStatement.executeQuery(SQLQuery);
+                    
+                    String AfterMood = "";
+                    if (rs.next())
+                    {
+                        AfterMood = rs.getString("MoodAfter");
+                    }
+
+                    int MoodBeforeNum  = ConvertMoodToNumber(BeforeMood,
+                            SQLStatement);
+                    int MoodAfterNum  = ConvertMoodToNumber(AfterMood,
+                            SQLStatement);
+                    MoodTotal = MoodTotal + (MoodAfterNum - MoodBeforeNum);
+                }
+                
+                rs.close();
+                return (float) MoodTotal/(float) i;
             }
-            return (float) MoodTotal/(float) i;
+            else
+            {
+                /*Count the number of rows we need to go through. Exclude any
+                mood entries if they don't have a Before AND After Mood*/
+                SQLQuery = "SELECT Count(UserID) AS UserCount FROM UserMood WHERE " +
+                        "TrackID = '" + TrackID + "' " +
+                        "AND MoodBefore IS NOT NULL AND MoodAfter IS NOT NULL";
+
+                ResultSet rs = SQLStatement.executeQuery(SQLQuery);
+
+                int RowCount = 0;
+                if (rs.next())
+                {
+                    RowCount = Integer.parseInt(rs.getString("UserCount"));
+                } 
+
+                /*Get the MoodBefore and MoodAfter strings from the UserMood table by matching the
+                record to the TrackID (getting all tracks regardless of user). Note this gets the nth
+                record in the database as we want all the accumulated mood scores*/
+                int i;
+                for (i = 1; i < RowCount; i++)
+                {
+                    SQLQuery = "SELECT TOP(1) MoodBefore FROM (SELECT ROW_NUMBER() OVER" +
+                            "(ORDER BY MoodBefore ASC) AS RowNumber, MoodBefore FROM UserMood " +
+                            "WHERE TrackID = '" + TrackID + "')" +
+                            " AS Mood WHERE RowNumber = " + i;
+                    
+                    rs = SQLStatement.executeQuery(SQLQuery);
+                    
+                    String BeforeMood = "";
+                    if (rs.next())
+                    {
+                        BeforeMood = rs.getString("MoodBefore");
+                    }
+
+                    SQLQuery = "SELECT TOP(1) MoodAfter FROM (SELECT ROW_NUMBER() OVER" +
+                            "(ORDER BY MoodAfter ASC) AS RowNumber, MoodAfter FROM UserMood " +
+                            "WHERE TrackID = '" + TrackID + "')" +
+                            " AS Mood WHERE RowNumber = " + i;
+                    
+                    rs = SQLStatement.executeQuery(SQLQuery);
+                    
+                    String AfterMood = "";
+                    if (rs.next())
+                    {
+                        AfterMood = rs.getString("MoodAfter");
+                    } 
+
+                    int MoodBeforeNum  = ConvertMoodToNumber(BeforeMood,
+                            SQLStatement);
+                    int MoodAfterNum  = ConvertMoodToNumber(AfterMood,
+                            SQLStatement);
+                    MoodTotal = MoodTotal + (MoodAfterNum - MoodBeforeNum);
+                }
+                
+                rs.close();
+                return (float) MoodTotal/(float) i;
+            }
         }
-        else
+        catch (SQLException err)
         {
-            //Count the number of rows we need to go through.
-            SQLQuery = "SELECT Count(UserID) FROM UserMood WHERE " +
-                    "TrackID = '" + TrackID + "'";
-
-            int RowCount = 4;
-
-            /*Get the MoodBefore and MoodAfter strings from the UserMood table by matching the
-            record to the TrackID (getting all tracks regardless of user). Note this gets the nth
-            record in the database as we want all the accumulated mood scores*/
-            int i;
-            for (i = 1; i < RowCount; i++)
-            {
-                SQLQuery = "SELECT TOP(1) MoodBefore FROM (SELECT ROW_NUMBER() OVER" +
-                        "(ORDER BY MoodBefore ASC) AS RowNumber, MoodBefore FROM UserMood " +
-                        "WHERE TrackID = '" + TrackID + "')" +
-                        " AS Mood WHERE RowNumber = " + i;
-
-                String BeforeMood = "Happy";
-
-                SQLQuery = "SELECT TOP(1) MoodAfter FROM (SELECT ROW_NUMBER() OVER" +
-                        "(ORDER BY MoodAfter ASC) AS RowNumber, MoodAfter FROM UserMood " +
-                        "WHERE TrackID = '" + TrackID + "')" +
-                        " AS Mood WHERE RowNumber = " + i;
-
-                String AfterMood = "Sad";
-
-                int MoodBeforeNum  = ConvertMoodToNumber(BeforeMood,
-                        SQLStatement);
-                int MoodAfterNum  = ConvertMoodToNumber(AfterMood,
-                        SQLStatement);
-                MoodTotal = MoodTotal + (MoodAfterNum - MoodBeforeNum);
-            }
-            return (float) MoodTotal/(float) i;
+            System.err.println("Error executing query");
+            err.printStackTrace(System.err);
+            System.exit(0);
+            return -1;
         }
     }
     
@@ -640,15 +811,16 @@ public static void main(String[] args)
         try
         {
             if (CheckMoodEntry(UserID, SQLStatement))
-            {
-                //ALERT TO USER - ENTER MOOD
-                boolean UserEnteredMood = true;
-                String BeforeMood = "Happy";
+            {                
+                String BeforeMood = OpenUserAlertBefore(UserID);
+                
+                //Get the current Date/Time and format it for SQL Server.
+                Date CurrentDate = new Date();          
+                SimpleDateFormat SQLDateFormat =
+                        new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+                String MoodBeforeTime = SQLDateFormat.format(CurrentDate);
 
-                String MoodBeforeTime = "2018-05-23 06:34:46";
-                //ALERT TO USER - ENTER MOOD
-
-                if (UserEnteredMood)
+                if (!BeforeMood.equals(""))
                 {
                     /*System gets current Date/Time, BeforeMood, UserID and
                     Track ID and adds these to UserMood database table.
@@ -662,13 +834,10 @@ public static void main(String[] args)
 
                     ResultSet rs = SQLStatement.executeQuery(SQLQuery);
 
-                    String MoodIDString = "";
                     int MoodID = 0;
-
                     if (rs.next())
                     {
-                        MoodIDString = rs.getString("MoodID");
-                        MoodID = Integer.parseInt(MoodIDString);
+                        MoodID = Integer.parseInt(rs.getString("MoodID"));
                     } 
                     return MoodID;
                 }
@@ -693,58 +862,117 @@ public static void main(String[] args)
     
     private static boolean UserEnterMoodAfter(int MoodID, Statement SQLStatement)
     {
-        //ALERT TO USER - ENTER AFTER MOOD
-        String AfterMood = "Sad";
-        String UserLiked = "Yes";
-        String MoodAfterTime = "2018-05-23 06:34:46";
-        //ALERT TO USER - ENTER AFTER MOOD
-
-        boolean UserEnteredMood = true;
-
-        if (UserEnteredMood)
+        try
         {
-            /*System to get the BeforeMood from the table by matching this with MoodID.*/
-            String SQLQuery = "SELECT MoodBefore FROM UserMood WHERE MoodID = " + "'" +
-                    MoodID + "'";
+            /*System to get the UserID from the table by matching this with
+            MoodID.*/
+            String SQLQuery = "SELECT UserID FROM UserMood WHERE MoodID = "
+                    + "'" + MoodID + "'";
 
-            /*System to get the UserID from the table by matching this with MoodID.*/
-            SQLQuery = "SELECT UserID FROM UserMood WHERE MoodID = " + "'" +
-                    MoodID + "'";
+            ResultSet rs = SQLStatement.executeQuery(SQLQuery);
 
-            String UserID = "1";
+            String UserID = "-1";
 
-            String BeforeMood = "Happy";
-            int BeforeScore = ConvertMoodToNumber(BeforeMood, SQLStatement);
-            int AfterScore = ConvertMoodToNumber(AfterMood, SQLStatement);
-            int ScoreDiff = AfterScore - BeforeScore;
-
-            ScoreDiff = 6; //TEST
-
-            if (ScoreDiff < -3 || ScoreDiff > 3)
+            if (rs.next())
             {
-                //OPEN DIARY ALERT
-                String DiaryEntryText = "Dear Diary...";
-                String DiaryEntryTime = "2018-05-23 06:34:46";
-                //OPEN DIARY ALERT
-
-                //INSERT DIARY ENTRY
-                SQLQuery = "INSERT INTO UserDiary (UserID, DiaryEntryDate, DiaryEntryText)\n" +
-                        "VALUES('" + UserID + "', '" + DiaryEntryTime + "', '" +
-                        DiaryEntryText +"')";
+               UserID = rs.getString("UserID");
             }
+            
+            String AfterInformation[] =
+                    AfterInformation = OpenUserAlertAfter(UserID);
+            
+            String AfterMood = AfterInformation[0];
+            String UserLiked = AfterInformation[1];
+            
+            //Get the current Date/Time and format it for SQL Server.
+            Date CurrentDate = new Date();          
+            SimpleDateFormat SQLDateFormat =
+                    new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+            String MoodAfterTime = SQLDateFormat.format(CurrentDate);
 
-        /*System gets current Date/Time, AfterMood, UserLiked, MoodID and updates the UserMood
-        database table with these parameters where MoodID matches.*/
-            SQLQuery = "UPDATE UserMood SET MoodAfter = '" + AfterMood + "', " +
-                    "MoodAfterTime = '" + MoodAfterTime + "', " + "UserLiked = '" +
-                    UserLiked + "', " + "HasBeenRecommended = '" + "No" + "'\n" +
-                    "WHERE MoodID = '" + MoodID + "'";
+            if (!AfterMood.equals(""))
+            {
+                /*System to get the BeforeMood from the table by matching this with MoodID.*/
+                SQLQuery = "SELECT MoodBefore FROM UserMood WHERE MoodID = " + "'" +
+                        MoodID + "'";
 
-            AddTracksToPlaylist(UserID, SQLStatement);
+                 rs = SQLStatement.executeQuery(SQLQuery);
 
-            return true;
+                 String BeforeMood = "";
+
+                 if (rs.next())
+                 {
+                    BeforeMood = rs.getString("MoodBefore");
+                 }
+                 
+                /*System gets current Date/Time, AfterMood, UserLiked, MoodID
+                and updates the UserMood database table with these parameters
+                where MoodID matches.*/
+                SQLQuery = "UPDATE UserMood SET MoodAfter = '" + AfterMood + "', " +
+                        "MoodAfterTime = '" + MoodAfterTime + "', " + "UserLiked = '" +
+                        UserLiked + "', " + "HasBeenRecommended = '" + "No" + "'\n" +
+                        "WHERE MoodID = '" + MoodID + "'";
+
+                SQLStatement.execute(SQLQuery);
+
+                int BeforeScore = ConvertMoodToNumber(BeforeMood, SQLStatement);
+                int AfterScore = ConvertMoodToNumber(AfterMood, SQLStatement);
+                int ScoreDiff = AfterScore - BeforeScore;
+
+                if (ScoreDiff < -3 || ScoreDiff > 3)
+                {
+                    String DiaryEntryText = OpenUserAlertDiaryEntry(UserID);
+                    
+                    //Get the time the user made the diary entry.
+                    CurrentDate = new Date();          
+                    String DiaryEntryTime = SQLDateFormat.format(CurrentDate);
+
+                    SQLQuery = "INSERT INTO UserDiary (UserID, DiaryEntryDate, "
+                            + "DiaryEntryText)\n" +
+                            "VALUES('" + UserID + "', '" + DiaryEntryTime +
+                            "', '" + DiaryEntryText +"')";
+                    
+                    SQLStatement.execute(SQLQuery);
+                }
+                
+                AddTracksToPlaylist(UserID, SQLStatement);                
+                rs.close();
+                return true;
+            }
+            return false;
         }
-        return false;
+        catch (SQLException err)
+        {
+            System.err.println("Error executing query");
+            err.printStackTrace(System.err);
+            System.exit(0);
+            return false;
+        }
+    }
+    
+    private static String OpenUserAlertBefore(String UserID)
+    {
+        String BeforeMood = "Happy";
+        
+        //RUN THE CALL TO THE BEFORE USER ALERT HERE
+        
+        return BeforeMood;
+    }
+    
+    private static String[] OpenUserAlertAfter(String UserID)
+    {
+        //RUN THE CALL TO THE AFTER USER ALERT HERE
+        
+        String AfterInformation[] = {"Sad", "Yes"};
+        return AfterInformation;
+    }
+    
+    private static String OpenUserAlertDiaryEntry(String UserID)
+    {
+        //RUN THE CALL TO THE DIARY USER ALERT HERE
+        
+        String DiaryInformation = "Dear Diary...";
+        return DiaryInformation;
     }
     
     private static int TrackStarted(String UserID, String TrackName, String Genre,
