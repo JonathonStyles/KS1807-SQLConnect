@@ -1,4 +1,6 @@
 package sqlconnect;
+import java.io.*;
+import java.util.regex.*;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -10,16 +12,65 @@ public class RunServerInterface
     private static final String JDBCDriver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
     private static final String ServerConnectionType = "jdbc:sqlserver";
     
-    //May need to pass these parameters in through a configuration file
-    private static final String ServerName = "PE-KS1807\\SQLEXPRESS";
-    private static final String ServerPort = "1433";
-    private static final String DatabaseName = "MFMHDatabase_UAT";
-    private static final String DBUser = "TestUser";
-    private static final String DBUserPassword = "P@ssw0rd1";
+    private static String GetConfigurationDetails()
+    {
+        // The name of the file to open.
+        String ConfigurationFileName = "src\\sqlconnect\\SQLConnectionInfo.ini";
+        String Line;
+        String[] ConfigurationItems = new String[5];
+        String Text = System.getProperty("user.dir");
+        
+        try
+        {
+            FileReader fileReader = new FileReader(ConfigurationFileName);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
 
-    private static final String JDBC_URL = ServerConnectionType + "://" +
+            int i = 0;
+            //Read first five lines of the configuration file only
+            while((Line = bufferedReader.readLine()) != null && i < 5)
+            {
+                ConfigurationItems[i] = Line;
+                i++;
+            }
+            bufferedReader.close();
+        }
+        catch(FileNotFoundException ex)
+        {
+            System.out.println("Unable to open server configuratioon file '" +
+                    ConfigurationFileName + "'");                
+        }
+        catch(IOException ex)
+        {
+            System.out.println(
+                "Error reading server configuratioon file '" +
+                        ConfigurationFileName + "'");                  
+        }
+        
+        //Get the part of the configuration line between the single quotes.
+        String[] ConfigStrings = new String[5];
+        Pattern p = Pattern.compile("'([^']*)'");
+        for (int i = 0; i < 5; i++)
+        {
+            Matcher m = p.matcher(ConfigurationItems[i]);
+            if (m.find())
+            {
+                ConfigStrings[i] = m.group();
+                //Get rid of the single quotes from the string.
+                ConfigStrings[i] = ConfigStrings[i].replace("'", "");
+            }
+        }
+        
+        String ServerName = ConfigStrings[0];
+        String ServerPort = ConfigStrings[1];
+        String DatabaseName = ConfigStrings[2];
+        String DBUser = ConfigStrings[3];
+        String DBUserPassword = ConfigStrings[4];
+
+        String JDBC_URL = ServerConnectionType + "://" +
             ServerName + ":" + ServerPort + ";databasename=" + DatabaseName +
             ";user=" + DBUser + ";password=" + DBUserPassword + ";";
+        return JDBC_URL;
+    }
     
     public static void main(String[] args)
     {
@@ -75,8 +126,7 @@ public class RunServerInterface
         try
         {
             //Connect to the database with the connection string.
-            System.out.println(JDBC_URL);
-            Connection DatabaseConnection = DriverManager.getConnection(JDBC_URL);
+            Connection DatabaseConnection = DriverManager.getConnection(GetConfigurationDetails());
 
             //Create the statement object and result set for SQL Server.
             Statement SQLStatement = DatabaseConnection.createStatement(

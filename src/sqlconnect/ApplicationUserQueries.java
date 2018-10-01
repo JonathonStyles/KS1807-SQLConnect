@@ -6,11 +6,204 @@ import java.sql.Statement;
 
 public class ApplicationUserQueries
 {
+    private String DecryptPassword(String Password)
+    {
+        //Do something to decrypt this here.       
+        return Password;
+    }
+    
     private String EncryptPassword(String Password)
     {
-        //Do something to encrypt this here.
-        
+        //Do something to encrypt this here.        
         return Password;
+    }
+    
+    //Gets the last ten music tracks. Gets the Name, Genre, Artist and Length.
+    public String[][] GetMusicHistory(int UserID, Statement SQLStatement)
+    {
+        try
+        {
+            /*Gets the last ten music tracks that the user has listened to,
+            using the mood after time as the time when the user finished the
+            song*/
+            String SQLQuery = "SELECT DISTINCT TOP (10) TrackName, Genre, "
+                    + "Artist, Length, MoodAfterTime "
+                    + "FROM MusicTrack INNER JOIN UserMood ON "
+                    + "MusicTrack.TrackID = UserMood.TrackID " +
+                    "WHERE UserMood.UserID = '" + UserID + "' " +
+                    "AND MoodAfterTime IS NOT NULL AND MoodBeforeTime IS NOT NULL" +
+                    " ORDER BY UserMood.MoodAfterTime DESC";
+            ResultSet rs = SQLStatement.executeQuery(SQLQuery);
+
+            String MusicDetails[][] = new String[10][4];
+            
+            int i = 0;           
+            while (rs.next())
+            {
+                MusicDetails[i][0] = rs.getString("TrackName");
+                MusicDetails[i][1] = rs.getString("Genre");
+                MusicDetails[i][2] = rs.getString("Artist");
+                MusicDetails[i][3] = rs.getString("Length");
+                i++;
+            }
+            return MusicDetails;           
+        }
+        catch (SQLException err)
+        {
+            System.err.println("Error executing query");
+            err.printStackTrace(System.err);
+            System.exit(0);
+            return new String[0][0];
+        }
+    }
+    
+    public String[] GetUserDetails(int UserID, Statement SQLStatement)
+    {
+        try
+        {
+            String SQLQuery = "SELECT FirstName, LastName, EmailAddress, "
+                    + "DateOfBirth, Gender "
+                    + "FROM UserAccount WHERE UserID = '" + UserID + "'";
+            ResultSet rs = SQLStatement.executeQuery(SQLQuery);
+
+            String UserDetails[] = new String[5];
+            
+            if (rs.next())
+            {
+                UserDetails[0] = rs.getString("FirstName");
+                UserDetails[1] = rs.getString("LastName");
+                UserDetails[2] = rs.getString("EmailAddress");
+                UserDetails[3] = rs.getString("DateOfBirth");
+                UserDetails[4] = rs.getString("Gender");
+            }
+            return UserDetails;           
+        }
+        catch (SQLException err)
+        {
+            System.err.println("Error executing query");
+            err.printStackTrace(System.err);
+            System.exit(0);
+            return new String[0];
+        }
+    }
+    
+    public String[] GetUserDetailsRegistration(int UserID,
+                Statement SQLStatement)
+    {
+        try
+        {
+            String SQLQuery = "SELECT FirstName, LastName, EmailAddress, "
+                    + "DateOfBirth, Gender, UserPassword "
+                    + "FROM UserAccount WHERE UserID = '" + UserID + "'";
+            ResultSet rs = SQLStatement.executeQuery(SQLQuery);
+
+            String UserDetails[] = new String[6];
+            
+            if (rs.next())
+            {
+                UserDetails[0] = rs.getString("FirstName");
+                UserDetails[1] = rs.getString("LastName");
+                UserDetails[2] = rs.getString("EmailAddress");
+                UserDetails[3] = rs.getString("DateOfBirth");
+                UserDetails[4] = rs.getString("Gender");
+                UserDetails[5] = rs.getString("UserPassword");
+                UserDetails[5] = DecryptPassword(UserDetails[5]);
+            }
+            return UserDetails;           
+        }
+        catch (SQLException err)
+        {
+            System.err.println("Error executing query");
+            err.printStackTrace(System.err);
+            System.exit(0);
+            return new String[0];
+        }
+    }
+    
+    public int GetUserID(String EmailAddress, Statement SQLStatement)
+    {
+        try
+        {
+            String SQLQuery = "SELECT UserID "
+                    + "FROM UserAccount WHERE EmailAddress = '" +
+                    EmailAddress + "'";
+            ResultSet rs = SQLStatement.executeQuery(SQLQuery);
+
+            if (rs.next())
+            {
+                String UserIDString = "";
+                UserIDString = rs.getString("UserID");
+                if (!UserIDString.equals(""))
+                {
+                    return Integer.parseInt(UserIDString);
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+            return -1;
+        }
+        catch (SQLException err)
+        {
+            System.err.println("Error executing query");
+            err.printStackTrace(System.err);
+            System.exit(0);
+            return -1;
+        }
+    }
+    
+    public String GetUserPassword(int UserID, Statement SQLStatement)
+    {
+        try
+        {
+            String SQLQuery = "SELECT UserPassword "
+                    + "FROM UserAccount WHERE UserID = '" + UserID + "'";
+            ResultSet rs = SQLStatement.executeQuery(SQLQuery);
+
+            String UserPassword = "";
+            
+            if (rs.next())
+            {
+                UserPassword = rs.getString("UserPassword");
+            }
+            
+            UserPassword = DecryptPassword(UserPassword);
+            return UserPassword;           
+        }
+        catch (SQLException err)
+        {
+            System.err.println("Error executing query");
+            err.printStackTrace(System.err);
+            System.exit(0);
+            return "";
+        }
+    }
+    
+    public String[] GetUserSettings(int UserID, Statement SQLStatement)
+    {
+        try
+        {
+            String SQLQuery = "SELECT MakeRecommendations, MoodFrequency "
+                    + "FROM UserSettings WHERE UserID = '" + UserID + "'";
+            ResultSet rs = SQLStatement.executeQuery(SQLQuery);
+
+            String UserSettings[] = new String[2];
+            
+            if (rs.next())
+            {
+                UserSettings[0] = rs.getString("MakeRecommendations");
+                UserSettings[1] = rs.getString("MoodFrequency");
+            }
+            return UserSettings;           
+        }
+        catch (SQLException err)
+        {
+            System.err.println("Error executing query");
+            err.printStackTrace(System.err);
+            System.exit(0);
+            return new String[0];
+        }
     }
     
     public boolean IsEmailAddressUnique(String EmailAddress, Statement
@@ -114,7 +307,7 @@ public class ApplicationUserQueries
     
     public void UpdateNewUser(String FirstName, String LastName, String
             EmailAddress, String DateOfBirth, String Gender, String
-                    UserPassword, String UserID, Statement SQLStatement)
+                    UserPassword, int UserID, Statement SQLStatement)
     {
         try
         {
@@ -139,7 +332,7 @@ public class ApplicationUserQueries
         }
     }
     
-    public void UpdatePassword(String UserPassword, String UserID, Statement
+    public void UpdatePassword(String UserPassword, int UserID, Statement
             SQLStatement)
     {
         try
@@ -159,7 +352,7 @@ public class ApplicationUserQueries
     }
     
     public void UpdateUser(String FirstName, String LastName, String
-            EmailAddress, String DateOfBirth, String Gender, String UserID,
+            EmailAddress, String DateOfBirth, String Gender, int UserID,
             Statement SQLStatement)
     {
         try
@@ -184,7 +377,7 @@ public class ApplicationUserQueries
     
     public void UpdateUserSecondPage(String PreferredPlatform, String
             MusicQuestionOne, String MusicQuestionTwo, String
-                    MusicQuestionThree, String UserID, Statement SQLStatement)
+                    MusicQuestionThree, int UserID, Statement SQLStatement)
     {
         try
         {
@@ -205,7 +398,7 @@ public class ApplicationUserQueries
     }
     
     public void UpdateSettings (String MakeRecommendations, String
-            MoodFrequency, String UserID, Statement SQLStatement)
+            MoodFrequency, int UserID, Statement SQLStatement)
     {
         try
         {
@@ -220,6 +413,47 @@ public class ApplicationUserQueries
             System.err.println("Error executing query");
             err.printStackTrace(System.err);
             System.exit(0);
+        }
+    }
+    
+    public int VerifyLogin(String EmailAddress, String UserPassword,
+            Statement SQLStatement)
+    {
+        int UserID = GetUserID(EmailAddress, SQLStatement);
+
+        //Don't bother checking password if the ID does not match.
+        if(UserID == - 1)
+        {
+            return -1;
+        }
+
+        UserPassword = EncryptPassword(UserPassword);
+        String StoredPassword = GetUserPassword(UserID, SQLStatement);
+
+        //If password is wrong, return -1.
+        if (UserPassword.equals(StoredPassword))
+        {
+            return UserID;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+
+    public boolean VerifyPassword(int UserID, String UserPassword,
+            Statement SQLStatement)
+    {
+        UserPassword = EncryptPassword(UserPassword);       
+        String StoredPassword = GetUserPassword(UserID, SQLStatement);
+
+        if (UserPassword.equals(StoredPassword))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 }
