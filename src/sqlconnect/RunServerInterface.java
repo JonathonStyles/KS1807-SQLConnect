@@ -9,16 +9,16 @@ import java.sql.Statement;
 
 public class RunServerInterface
 {
-    private static final String JDBCDriver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+    private static final String JDBCDriver =
+            "com.microsoft.sqlserver.jdbc.SQLServerDriver";
     private static final String ServerConnectionType = "jdbc:sqlserver";
     
     private static String GetConfigurationDetails()
     {
-        // The name of the file to open.
+        //The name of the file to open.
         String ConfigurationFileName = "src\\sqlconnect\\SQLConnectionInfo.ini";
         String Line;
         String[] ConfigurationItems = new String[5];
-        String Text = System.getProperty("user.dir");
         
         try
         {
@@ -75,15 +75,15 @@ public class RunServerInterface
     public static void main(String[] args)
     {
         //NEED TO WORK ON THIS - WHAT DATA DO WE PASS INTO THIS PROGRAM AND HOW?
-        String QueryType = "";
-        int UserID = 0;
-        String TrackName = "";
-        String Genre = "";
-        String Artist = "";
-        String Length = "";
-        String MoodID = "";
+        //Using test data for now.
+        int UserID = 1;
+        String QueryType = "GetMusicHistory";
+        String TrackName = "When Johnny Comes Marching Home";
+        String Genre = "Marching Song";
+        String Artist = "An artist";
+        String Length = "4:00";
+        String MoodID = "5";
         
-        //User Test Data
         String FirstName = "Joseph";
         String LastName= "Zhang";
         String EmailAddress = "test@test.com";
@@ -94,21 +94,9 @@ public class RunServerInterface
         String PreferredPlatform = "Spotify";
         String MusicQuestionOne = "Quest1";
         String MusicQuestionTwo = "Quest2";
-        String MusicQuestionThree = "Quest3";
-        
+        String MusicQuestionThree = "Quest3";       
         String MakeRecommendations = "Yes";
         String MoodFrequency = "Once Per Hour";
-
-         if(args.length == 8)
-         {
-             QueryType = args[1];
-             UserID = Integer.parseInt(args[2]);
-             TrackName = args[3];
-             Genre = args[4];
-             Artist = args[5];
-             Length = args[6];
-             MoodID = args[7];
-         }
 
         /*First try loading the drivers that connect to the server*/
         try
@@ -126,52 +114,60 @@ public class RunServerInterface
         try
         {
             //Connect to the database with the connection string.
-            Connection DatabaseConnection = DriverManager.getConnection(GetConfigurationDetails());
+            Connection DatabaseConnection =
+                    DriverManager.getConnection(GetConfigurationDetails());
 
             //Create the statement object and result set for SQL Server.
             Statement SQLStatement = DatabaseConnection.createStatement(
-                    ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
-            ResultSet rs;
-
-            //TEST
-            QueryType = "UpdateUserSecondPage";
-            UserID = 1;
-            TrackName = "Musical Adventures7";
-            Genre = "Adventure";
-            Artist = "B-Cool";
-            Length = "4:45";
-            MoodID = "5";
-             //TEST
+                    ResultSet.TYPE_SCROLL_SENSITIVE,
+                            ResultSet.CONCUR_READ_ONLY);
              
              GeneratePlayLists Playlist = new GeneratePlayLists();
              ApplicationUserQueries UserQuery = new ApplicationUserQueries();
 
+             /*Depending on which query has been called by the API, run the
+             relavant function and resturn the result (if any).*/
+            String Result = "";
+            String[] ResultsList = new String[0];
+            String[][] TwoResultsList = new String[0][0];
+            int ResultNum = 0;
+            boolean Successful = false;
+            
             switch (QueryType)
-            {
+            {           
                 case "TrackStarted":
-                    Playlist.TrackStarted(UserID, TrackName, Genre, Artist,
+                    ResultNum = Playlist.TrackStarted(UserID, TrackName, Genre, Artist,
                             Length, SQLStatement);
                     break;
                 case "TrackEnded":
                     Playlist.TrackEnded(MoodID, SQLStatement);
                     break;
                 case "GetMusicHistory":
-                    UserQuery.GetMusicHistory(UserID, SQLStatement);
+                    TwoResultsList = UserQuery.GetMusicHistory(
+                            UserID, SQLStatement);
                     break; 
                 case "GetUserDetailsRegistration":
-                    UserQuery.GetUserDetailsRegistration(UserID, SQLStatement);
+                    ResultsList = UserQuery.GetUserDetailsRegistration(
+                            UserID, SQLStatement);
                     break;
                 case "GetUserDetails":
-                    UserQuery.GetUserDetails(UserID, SQLStatement);
+                    ResultsList = UserQuery.GetUserDetails(
+                            UserID, SQLStatement);
+                    break;
+                case "GetUserPassword":
+                    Result = UserQuery.GetUserPassword(UserID, SQLStatement);
                     break;
                 case "GetUserID":
-                    UserQuery.GetUserID(EmailAddress, SQLStatement);
+                    ResultNum = UserQuery.GetUserID(
+                            EmailAddress, SQLStatement);
                     break;
                 case "GetUserSettings":
-                    UserQuery.GetUserSettings(UserID, SQLStatement);
+                    ResultsList = UserQuery.GetUserSettings(
+                            UserID, SQLStatement);
                     break;
                 case "IsEmailAddressUnique":
-                    UserQuery.IsEmailAddressUnique(EmailAddress, SQLStatement);
+                    Successful = UserQuery.IsEmailAddressUnique(
+                            EmailAddress, SQLStatement);
                     break;
                 case "InsertNewUser":
                     UserQuery.InsertNewUser(FirstName, LastName, EmailAddress,
@@ -200,12 +196,12 @@ public class RunServerInterface
                                 MoodFrequency, UserID, SQLStatement);
                     break;
                 case "VerifyLogin":
-                        UserQuery.VerifyLogin(EmailAddress, UserPassword,
-                                SQLStatement);
+                        ResultNum = UserQuery.VerifyLogin(
+                                EmailAddress, UserPassword, SQLStatement);
                     break;
                 case "VerifyPassword":
-                        UserQuery.VerifyPassword(UserID, UserPassword,
-                                SQLStatement);
+                        Successful = UserQuery.VerifyPassword(
+                                UserID, UserPassword, SQLStatement);
                     break;
                 default:
                     break;
@@ -213,6 +209,23 @@ public class RunServerInterface
             
             //close the database connection
             DatabaseConnection.close();
+            
+            if (!Result.equals(""))
+            {
+                //RETURN STRING TO API
+            }
+            else if (ResultsList.length != 0)
+            {
+                //RETURN STRING ARRAY TO API
+            }
+            else if (TwoResultsList.length != 0)
+            {
+                //RETURN TWO DIMENSIONAL STRING ARRAY TO API
+            }
+            else if (ResultNum != 0)
+            {
+                //RETURN NUMBER TO API
+            }
         }
         catch (SQLException err)
         {

@@ -5,13 +5,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class ApplicationUserQueries
-{
-    private String DecryptPassword(String Password)
-    {
-        //Do something to decrypt this here.       
-        return Password;
-    }
-    
+{   
     private String EncryptPassword(String Password)
     {
         //Do something to encrypt this here.        
@@ -107,7 +101,6 @@ public class ApplicationUserQueries
                 UserDetails[3] = rs.getString("DateOfBirth");
                 UserDetails[4] = rs.getString("Gender");
                 UserDetails[5] = rs.getString("UserPassword");
-                UserDetails[5] = DecryptPassword(UserDetails[5]);
             }
             return UserDetails;           
         }
@@ -167,8 +160,6 @@ public class ApplicationUserQueries
             {
                 UserPassword = rs.getString("UserPassword");
             }
-            
-            UserPassword = DecryptPassword(UserPassword);
             return UserPassword;           
         }
         catch (SQLException err)
