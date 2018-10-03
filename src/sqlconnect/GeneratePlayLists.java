@@ -30,10 +30,12 @@ public class GeneratePlayLists
             if (TrackID == -1)
             {
                 /*Create a new record in the MusicTrack table and get back the
-                ID of the newly inserted record*/
-                SQLQuery = "SET NOCOUNT ON; INSERT INTO MusicTrack (TrackName, Genre, Artist, Length)\n" +
+                ID of the newly inserted record. Set the
+                NumberOfTimesListened as 1*/
+                SQLQuery = "SET NOCOUNT ON; INSERT INTO MusicTrack (TrackName, "
+                        + "Genre, Artist, Length, NumberOfTimesListened)\n" +
                         "VALUES('" + TrackName + "', '" + Genre + "', '" +
-                        Artist + "', '" + Length + "'); "
+                        Artist + "', '" + Length + "', " + 1 + "); "
                         + "SELECT SCOPE_IDENTITY() AS NewTrackID";
                 
                 rs = SQLStatement.executeQuery(SQLQuery);
@@ -359,13 +361,15 @@ public class GeneratePlayLists
             int Index = GetIndexOfMaximumFloatValue(GenreScores);
 
             //We then get the string value of this genre from the index.
-            String HighestGenre= GenresAndScores[0][Index];
+            String HighestGenre = GenresAndScores[0][Index];
 
-            /*Select 10 unique music and random tracks that belong to this genre. Note ORDER BY newid()
-            should make the selection random*/
-            String SQLQuery = "SELECT TOP (10) TrackID FROM MusicTrack WHERE Genre = "
-                    + "'" + HighestGenre + "' ORDER BY newid()";
-
+            /*Select 10 unique music tracks that belong to this genre which
+            have the highest average mood scores for ALL users.*/
+            String SQLQuery = "SELECT TOP (10) TrackID, "
+                    + "(TotalMoodScore/NumberOfTimesListened) AS AverageScore "
+                    + "FROM MusicTrack WHERE Genre = '" + HighestGenre + "' "
+                    + "ORDER BY AverageScore DESC";
+            
             ResultSet rs = SQLStatement.executeQuery(SQLQuery);
 
             int i = 0;
@@ -406,12 +410,14 @@ public class GeneratePlayLists
             int Index = GetIndexOfMaximumFloatValue(GenreScores);
 
             //We then get the string value of this genre from the index.
-            String HighestGenre= GenresAndScores[0][Index];
+            String HighestGenre = GenresAndScores[0][Index];
 
-            /*Select 10 unique music and random tracks that belong to this genre. Note ORDER BY newid()
-            should make the selection random*/
-            String SQLQuery = "SELECT TOP (10) TrackID FROM MusicTrack WHERE Genre = '" +
-                    HighestGenre + "' ORDER BY newid()";
+            /*Select 10 unique music tracks that belong to this genre which
+            have the highest average mood scores for ALL users.*/
+            String SQLQuery = "SELECT TOP (10) TrackID, "
+                    + "(TotalMoodScore/NumberOfTimesListened) AS AverageScore "
+                    + "FROM MusicTrack WHERE Genre = '" + HighestGenre + "' "
+                    + "ORDER BY AverageScore DESC";
 
             ResultSet rs = SQLStatement.executeQuery(SQLQuery);
 
@@ -800,17 +806,21 @@ public class GeneratePlayLists
 
             if (!AfterMood.equals(""))
             {
-                /*System to get the BeforeMood from the table by matching this with MoodID.*/
-                SQLQuery = "SELECT MoodBefore FROM UserMood WHERE MoodID = " + "'" +
+                /*System to get the BeforeMood and TrackID from the table by
+                matching this with MoodID.*/
+                SQLQuery = "SELECT MoodBefore, TrackID FROM UserMood WHERE "
+                        + "MoodID = " + "'" +
                         MoodID + "'";
 
                  rs = SQLStatement.executeQuery(SQLQuery);
 
                  String BeforeMood = "";
+                 int TrackID = -1;
 
                  if (rs.next())
                  {
                     BeforeMood = rs.getString("MoodBefore");
+                    TrackID = Integer.parseInt(rs.getString("TrackID"));
                  }
                  
                 /*System gets current Date/Time, AfterMood, UserLiked, MoodID
@@ -826,6 +836,18 @@ public class GeneratePlayLists
                 int BeforeScore = ConvertMoodToNumber(BeforeMood, SQLStatement);
                 int AfterScore = ConvertMoodToNumber(AfterMood, SQLStatement);
                 int ScoreDiff = AfterScore - BeforeScore;
+                
+                /*Update the MusicTrack table to add the score to it and
+                increment the listen count, so we have a record as to wether
+                this music track tends to make users feel better or not.
+                Note this is a cummulative score for all users.*/
+                SQLQuery = "UPDATE MusicTrack SET TotalMoodScore = "
+                        + "TotalMoodScore + " + ScoreDiff + ", "
+                        + "NumberOfTimesListened =  NumberOfTimesListened + 1 "
+                        + "WHERE TrackID = "
+                        + TrackID;
+                
+                SQLStatement.execute(SQLQuery);
 
                 if (ScoreDiff < -3 || ScoreDiff > 3)
                 {

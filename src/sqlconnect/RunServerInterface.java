@@ -77,7 +77,7 @@ public class RunServerInterface
         //NEED TO WORK ON THIS - WHAT DATA DO WE PASS INTO THIS PROGRAM AND HOW?
         //Using test data for now.
         int UserID = 1;
-        String QueryType = "GetMusicHistory";
+        String QueryType = "TrackEnded";
         String TrackName = "When Johnny Comes Marching Home";
         String Genre = "Marching Song";
         String Artist = "An artist";
