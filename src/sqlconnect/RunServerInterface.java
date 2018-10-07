@@ -77,7 +77,7 @@ public class RunServerInterface
         //NEED TO WORK ON THIS - WHAT DATA DO WE PASS INTO THIS PROGRAM AND HOW?
         //Using test data for now.
         int UserID = 1;
-        String QueryType = "TrackEnded";
+        String QueryType = "VerifyLogin";
         String TrackName = "When Johnny Comes Marching Home";
         String Genre = "Marching Song";
         String Artist = "An artist";
@@ -86,10 +86,10 @@ public class RunServerInterface
         
         String FirstName = "Joseph";
         String LastName= "Zhang";
-        String EmailAddress = "test@test.com";
+        String EmailAddress = "test@zhang.com";
         String DateOfBirth = "09-26-2000 05:23:34";
         String Gender = "Female";
-        String UserPassword = "Testing";
+        String UserPassword = "P@ssw0rd1";
         
         String PreferredPlatform = "Spotify";
         String MusicQuestionOne = "Quest1";

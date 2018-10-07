@@ -3,13 +3,44 @@ package sqlconnect;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.security.NoSuchAlgorithmException;
+import java.security.MessageDigest;
 
 public class ApplicationUserQueries
-{   
+{
+    /*Code for this algorithm derived from:
+    https://howtodoinjava.com/security/how-to-generate-secure-password-hash-md5-sha-pbkdf2-bcrypt-examples/
+    */
     private String EncryptPassword(String Password)
     {
-        //Do something to encrypt this here.        
-        return Password;
+        String EncryptedPassword = "";
+        try
+        {
+            //Using MD5 Message-Digest Algorithm to encrypt the password.
+            MessageDigest Digest = MessageDigest.getInstance("MD5");
+            
+            //Add password bytes to digest.
+            Digest.update(Password.getBytes());
+            
+            //Get the hash's bytes.
+            byte[] Bytes = Digest.digest();
+            
+            //Convert these decimal bytes to hexadecimal format.
+            StringBuilder StringToBuild = new StringBuilder();
+            
+            for(int i=0; i< Bytes.length ;i++)
+            {
+                StringToBuild.append(Integer.toString((Bytes[i] & 0xff) +
+                        0x100, 16).substring(1));
+            }
+
+            EncryptedPassword = StringToBuild.toString();
+        }
+        catch (NoSuchAlgorithmException e)
+        {
+            e.printStackTrace();
+        }    
+        return EncryptedPassword;
     }
     
     //Gets the last ten music tracks. Gets the Name, Genre, Artist and Length.
