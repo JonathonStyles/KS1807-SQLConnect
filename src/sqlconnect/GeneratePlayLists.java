@@ -343,8 +343,7 @@ public class GeneratePlayLists
 
     private static int[] MakeRecommendation(int UserID, Statement SQLStatement)
     {
-        int TrackIDs[] = new int[10];
-        
+        int TrackIDs[] = new int[10];   
         try
         {
             String[][] GenresAndScores = SetRecommendationScoreForGenre(UserID,
@@ -542,13 +541,14 @@ public class GeneratePlayLists
                     TheGenre = rs.getString("Genre");
                 }    
 
-                /*Make sure that the Genre Scores correspond to where the string was originally
-                added in the Genre array (so that the Classical Music score should go where
-                Classical Music was added)*/
+                /*Make sure that the Genre Scores correspond to where the
+                string was originally added in the Genre array (so that the
+                Classical Music score should go where Classical Music was
+                added)*/
                 int GenreIndex = GetArrayIndexFromString(Genres, TheGenre);
 
-                /*Add up the scores for each music track in the same genre and count how many music
-                tracks are in that genre.*/
+                /*Add up the scores for each music track in the same genre
+                and count how many music tracks are in that genre.*/
                 GenreScores[GenreIndex] = GenreScores[GenreIndex] + TrackScores[i];
                 GenreTrackCount[GenreIndex] = GenreTrackCount[GenreIndex] + 1;
             }
@@ -646,8 +646,7 @@ public class GeneratePlayLists
                     int MoodAfterNum  = ConvertMoodToNumber(AfterMood,
                             SQLStatement);
                     MoodTotal = MoodTotal + (MoodAfterNum - MoodBeforeNum);
-                }
-                
+                }            
                 rs.close();
                 return (float) MoodTotal/(float) i;
             }
@@ -786,7 +785,6 @@ public class GeneratePlayLists
             ResultSet rs = SQLStatement.executeQuery(SQLQuery);
 
             int UserID = -1;
-
             if (rs.next())
             {
                UserID = Integer.parseInt(rs.getString("UserID"));
@@ -826,9 +824,10 @@ public class GeneratePlayLists
                 /*System gets current Date/Time, AfterMood, UserLiked, MoodID
                 and updates the UserMood database table with these parameters
                 where MoodID matches.*/
-                SQLQuery = "UPDATE UserMood SET MoodAfter = '" + AfterMood + "', " +
-                        "MoodAfterTime = '" + MoodAfterTime + "', " + "UserLiked = '" +
-                        UserLiked + "', " + "HasBeenRecommended = '" + "No" + "'\n" +
+                SQLQuery = "UPDATE UserMood SET MoodAfter = '" + AfterMood +
+                        "', " + "MoodAfterTime = '" + MoodAfterTime + "', " +
+                        "UserLiked = '" + UserLiked + "', " +
+                        "HasBeenRecommended = '" + "No" + "'\n" +
                         "WHERE MoodID = '" + MoodID + "'";
 
                 SQLStatement.execute(SQLQuery);
@@ -917,7 +916,7 @@ public class GeneratePlayLists
     public static void TrackEnded(String MoodID, Statement SQLStatement)
     {
         int MoodIDNum = Integer.parseInt(MoodID);
-        if (MoodIDNum > 1)
+        if (MoodIDNum > 0)
         {
             UserEnterMoodAfter(MoodIDNum, SQLStatement);
         }
