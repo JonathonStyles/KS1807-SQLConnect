@@ -77,7 +77,7 @@ public class RunServerInterface
         //NEED TO WORK ON THIS - WHAT DATA DO WE PASS INTO THIS PROGRAM AND HOW?
         //Using test data for now.
         int UserID = 1;
-        String QueryType = "VerifyLogin";
+        String QueryType = "UpdateUserSecondPage";
         String TrackName = "When Johnny Comes Marching Home";
         String Genre = "Marching Song";
         String Artist = "An artist";
@@ -91,10 +91,10 @@ public class RunServerInterface
         String Gender = "Female";
         String UserPassword = "P@ssw0rd1";
         
-        String PreferredPlatform = "Spotify";
         String MusicQuestionOne = "Quest1";
         String MusicQuestionTwo = "Quest2";
-        String MusicQuestionThree = "Quest3";       
+        String MusicQuestionThree = "Quest3";     
+        String MusicQuestionFour = "Quest4";  
         String MakeRecommendations = "Yes";
         String MoodFrequency = "Once Per Hour";
 
@@ -183,9 +183,9 @@ public class RunServerInterface
                             SQLStatement);
                     break;
                 case "UpdateUserSecondPage":
-                    UserQuery.UpdateUserSecondPage(PreferredPlatform,
-                            MusicQuestionOne, MusicQuestionTwo,
-                            MusicQuestionThree, UserID, SQLStatement);
+                    UserQuery.UpdateUserSecondPage(MusicQuestionOne,
+                            MusicQuestionTwo, MusicQuestionThree,
+                            MusicQuestionFour, UserID, SQLStatement);
                     break;
                 case "UpdateUser":
                         UserQuery.UpdateUser(FirstName, LastName, EmailAddress,

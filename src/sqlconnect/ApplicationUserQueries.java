@@ -397,17 +397,17 @@ public class ApplicationUserQueries
         }
     }
     
-    public void UpdateUserSecondPage(String PreferredPlatform, String
-            MusicQuestionOne, String MusicQuestionTwo, String
-                    MusicQuestionThree, int UserID, Statement SQLStatement)
+    public void UpdateUserSecondPage(String MusicQuestionOne, String
+            MusicQuestionTwo, String MusicQuestionThree, String
+                    MusicQuestionFour, int UserID, Statement SQLStatement)
     {
         try
         {
-            String SQLQuery = "UPDATE UserAccount SET PreferredPlatform ='"
-                    + PreferredPlatform +
-                    "', MusicQuestionOne = '" + MusicQuestionOne +
-                    "',MusicQuestionTwo = '" + MusicQuestionTwo + "',"
-                    + "MusicQuestionThree = '" + MusicQuestionThree + "' "
+            String SQLQuery = "UPDATE UserAccount SET MusicQuestionOne ='"
+                    + MusicQuestionOne +
+                    "', MusicQuestionTwo = '" + MusicQuestionTwo +
+                    "',MusicQuestionThree = '" + MusicQuestionThree + "',"
+                    + "MusicQuestionFour = '" + MusicQuestionFour + "' "
                     + "WHERE UserID = '" + UserID + "'";
                 SQLStatement.execute(SQLQuery); 
         }
